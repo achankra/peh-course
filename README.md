@@ -4,6 +4,14 @@ A hands-on, 2-day workshop by [Ajay Chankramath](mailto:ajay@platformetrics.com)
 
 **Register:** [Eventbrite - Building an AI-Powered Internal Developer Platform from Scratch](https://www.eventbrite.co.uk/e/building-an-ai-powered-internal-developer-platform-from-scratch-tickets-1978960034736)
 
+### Companion Resources
+
+This course is based on *The Platform Engineer's Handbook*. The book covers the full breadth of platform engineering across 14 chapters, including tools like ArgoCD, Argo Rollouts, OpenCost, and more that go beyond what we can cover in two days. The course distills the book's core concepts into a hands-on, buildable platform you can take home.
+
+- **Book Companion Site:** [peh-packt.platformetrics.com](https://peh-packt.platformetrics.com/)
+- **Book GitHub Repo:** [github.com/achankra/peh](https://github.com/achankra/peh) — full code samples for all 14 chapters
+- **Course GitHub Repo:** [github.com/achankra/peh-course](https://github.com/achankra/peh-course) — this repo (workshop code only)
+
 ---
 
 ## What This Course Is About
@@ -40,23 +48,23 @@ The course standardizes on one tool per job to keep setup simple and eliminate "
 | **IaC / Provisioning** | Pulumi (Python SDK) | Cluster and resource provisioning |
 | **Resource Abstraction** | Crossplane | Self-service XRDs, Compositions, Claims |
 | **Policy Engine** | OPA / Conftest / Gatekeeper | Policy-as-Code, shift-left validation |
-| **GitOps** | ArgoCD | Declarative continuous delivery |
 | **Developer Portal** | Backstage | Service catalog, software templates, docs |
 | **CI/CD** | GitHub Actions | Reusable workflow pipelines |
 | **Observability** | OpenTelemetry Collector | Unified telemetry collection |
 | **Metrics** | Prometheus + Sloth | Metrics, SLO-driven alerting |
 | **Tracing** | Jaeger | Distributed tracing |
 | **Logging** | Loki | Log aggregation |
-| **Cost Management** | OpenCost | Kubernetes cost visibility |
 | **Autoscaling** | HPA / VPA | Horizontal and Vertical Pod Autoscaling |
 | **Chaos Engineering** | Chaos Mesh | Fault injection experiments |
-| **Progressive Delivery** | Argo Rollouts | Canary, blue-green deployments |
+| **Progressive Delivery** | Canary / Blue-Green | Built-in deployment manifests with rollback controller |
 | **Backup & Recovery** | Velero | Cluster backup and restore |
 | **AI / LLM** | Anthropic Claude (optional) | RAG, multi-agent incident response |
 | **AI (Local / No API Key)** | TF-IDF (scikit-learn) | Local doc search, alert correlation |
 | **Language** | Python 3 | All scripts and automation |
 
 > **Note on AI features:** Every AI demo has a local-only fallback (TF-IDF, heuristics) that runs without any API key. Claude integration is optional for those who want to explore LLM-powered capabilities.
+
+> **Looking for ArgoCD, Argo Rollouts, OpenCost, or other tools?** The book covers a broader set of tools across 14 chapters. See the [book repo](https://github.com/achankra/peh) for the full stack. This course focuses on the subset you can build and run in two days.
 
 ---
 
@@ -160,7 +168,7 @@ Code/
 | Session | Title | Focus |
 |---|---|---|
 | [Session 5](Session5/) | **Developer Experience & Self-Service** | Backstage portal, service catalog, golden paths, AI-powered doc search (RAG) |
-| [Session 6](Session6/) | **Observability, SLOs & Cost** | OpenTelemetry, Prometheus, Sloth SLOs, OpenCost, AI alert correlation |
+| [Session 6](Session6/) | **Observability, SLOs & Cost** | OpenTelemetry, Prometheus, Sloth SLOs, cost analysis, AI alert correlation |
 | [Session 7](Session7/) | **Production Readiness & Resilience** | Chaos Mesh, canary/blue-green, Velero backups, AI runbook automation |
 | [Session 8](Session8/) | **AI-Augmented Platforms** | Multi-agent incident response, AI governance, agent observability, MCP integration |
 | [Session 9](Session9/) | **Workshop Synthesis & Next Steps** | KPI measurement, AI impact metrics, 30/60/90-day adoption roadmap |
@@ -307,6 +315,8 @@ pip3 install scikit-learn pyyaml --break-system-packages
 
 - Email: [ajay@platformetrics.com](mailto:ajay@platformetrics.com)
 - Book: [The Platform Engineer's Handbook](https://www.packtpub.com/en-us/product/the-platform-engineers-handbook-9781805128885)
+- Companion Site: [peh-packt.platformetrics.com](https://peh-packt.platformetrics.com/)
+- Book Code: [github.com/achankra/peh](https://github.com/achankra/peh)
 
 ---
 
