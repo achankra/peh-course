@@ -16,20 +16,22 @@ This course is based on *The Platform Engineer's Handbook*. The book covers the 
 
 ## What This Course Is About
 
-Most platform engineering content stops at theory. This workshop starts from an empty terminal and ends with a fully functional, AI-augmented Internal Developer Platform running on your laptop. Over two days (4 hours each, 9 sessions), you will build every layer of the platform yourself — from cluster provisioning and infrastructure-as-code through developer portals, observability, chaos engineering, and AI-powered operations.
+Most platform engineering content stops at theory. This workshop starts from an empty terminal and walks you through every layer of an Internal Developer Platform — from cluster provisioning and infrastructure-as-code through developer portals, observability, chaos engineering, and AI-powered operations. Over two days (4 hours each, 9 sessions), you'll build and run each component hands-on, understand how they connect, and leave with working code you can extend at your own pace.
 
-No cloud accounts required. No vendor lock-in. Everything runs locally on Kubernetes (Kind), uses open-source tools, and is designed so you can take what you build straight back to your team.
+No cloud accounts required. No vendor lock-in. Everything runs locally on Kubernetes (Kind), uses open-source tools, and is designed so you can take what you build straight back to your team. For the complete platform engineering journey across all 14 chapters, see [*The Platform Engineer's Handbook*](https://peh-packt.platformetrics.com/).
 
 ### What You'll Walk Away With
 
-- A working IDP running on Kind with self-service namespaces, RBAC, and resource quotas
-- Crossplane XRDs that let developers provision databases with 10 lines of YAML
-- A Backstage developer portal with software templates and a service catalog
-- Full observability (OpenTelemetry, Prometheus, Jaeger, Loki) with SLO-driven alerting
-- Progressive delivery (canary, blue-green) with automated rollback
-- Chaos engineering experiments with Chaos Mesh
-- AI-powered capabilities: RAG doc search, multi-agent incident response, alert correlation, AI governance
-- A 30/60/90-day platform adoption roadmap
+- A Kind cluster configured with team namespaces, RBAC roles, and resource quotas — the multi-tenant foundation of any IDP
+- Crossplane XRDs and Compositions that turn database provisioning into a 10-line developer claim
+- Backstage software templates, service catalog configuration, and a project bootstrapper that scaffolds production-ready services
+- An OpenTelemetry Collector pipeline with Prometheus metrics, Jaeger tracing, Loki logging, and SLO definitions using Sloth
+- Canary and blue-green deployment manifests with an automated rollback controller
+- Chaos Mesh experiments (network delay, pod kill, pod failure) that test resilience before users find the gaps
+- AI-powered automation scripts: RAG doc search (runs locally, no API key), multi-agent incident response, alert correlation, and governance alerts
+- A personal 30/60/90-day platform adoption roadmap based on your maturity assessment
+
+> **Course vs. Book:** This workshop introduces each layer of the platform with working code and hands-on exercises. *The Platform Engineer's Handbook* goes deeper — covering production GitOps with ArgoCD, advanced progressive delivery with Argo Rollouts, cost management with OpenCost, and more across 14 chapters. The course is the starting point; the book is the complete reference.
 
 ### Who Should Attend
 
