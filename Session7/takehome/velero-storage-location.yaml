@@ -1,0 +1,158 @@
+# velero-storage-location.yaml
+# Backup storage locations for Velero using MinIO (S3-compatible)
+# Runs entirely inside the Kind cluster — no cloud provider required.
+#
+# Prerequisites:
+#   1. Install MinIO:  helm install minio minio/minio -n velero -f minio-values.yaml
+#   2. Create bucket:  mc alias set local http://minio.velero:9000 minioadmin minioadmin
+#                       mc mb local/velero-backups
+
+---
+apiVersion: velero.io/v1
+kind: BackupStorageLocation
+metadata:
+  name: default
+  namespace: velero
+spec:
+  # Use the AWS (S3-compatible) plugin — works with MinIO
+  provider: aws
+
+  # MinIO bucket configuration
+  objectStorage:
+    bucket: velero-backups
+    prefix: velero
+
+  # MinIO-specific S3-compatible settings
+  config:
+    # MinIO endpoint inside the cluster
+    s3Url: http://minio.velero.svc.cluster.local:9000
+
+    # Region is required by the plugin but arbitrary for MinIO
+    region: us-east-1
+
+    # Path-style required for MinIO (not virtual-hosted)
+    s3ForcePathStyle: "true"
+
+    # No TLS for local MinIO
+    insecureSkipTLSVerify: "true"
+
+  # Access credentials
+  credential:
+    name: velero-minio-credentials
+    key: cloud
+
+  accessMode: ReadWrite
+
+  # Default backup location
+  default: true
+
+---
+# Credentials secret for MinIO access
+apiVersion: v1
+kind: Secret
+metadata:
+  name: velero-minio-credentials
+  namespace: velero
+type: Opaque
+stringData:
+  cloud: |
+    [default]
+    aws_access_key_id=minioadmin
+    aws_secret_access_key=minioadmin
+
+---
+# MinIO deployment for local object storage
+# Alternative: use the MinIO Helm chart for a fuller deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: velero
+  labels:
+    app: minio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: minio/minio:latest
+          command:
+            - minio
+            - server
+            - /data
+            - --console-address
+            - ":9001"
+          ports:
+            - containerPort: 9000
+              name: api
+            - containerPort: 9001
+              name: console
+          env:
+            - name: MINIO_ROOT_USER
+              value: minioadmin
+            - name: MINIO_ROOT_PASSWORD
+              value: minioadmin
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: velero
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9000
+      targetPort: 9000
+      name: api
+    - port: 9001
+      targetPort: 9001
+      name: console
+  selector:
+    app: minio
+
+---
+# Job to create the velero-backups bucket on MinIO startup
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-setup
+  namespace: velero
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: minio/mc:latest
+          command:
+            - /bin/sh
+            - -c
+            - |
+              # Wait for MinIO to be ready
+              until mc alias set local http://minio.velero.svc.cluster.local:9000 minioadmin minioadmin; do
+                echo "Waiting for MinIO..."
+                sleep 2
+              done
+              # Create the backup bucket
+              mc mb --ignore-existing local/velero-backups
+              echo "Bucket 'velero-backups' is ready"

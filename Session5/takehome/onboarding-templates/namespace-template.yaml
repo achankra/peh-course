@@ -1,0 +1,29 @@
+# templates/namespace-template.yaml
+# ====================================
+# Go template for team namespace provisioning.
+# Applied by the onboarding API for each new team.
+#
+# Template variables:
+#   .TeamName   — team slug in kebab-case (e.g. "team-beta")
+#   .Tier       — resource tier: starter | standard | enterprise
+#   .CostCenter — billing cost-center code
+#
+# Note on Go template syntax: variable names must not contain hyphens.
+# Use .TeamName (camelCase) not .Team-Name (invalid).
+#
+# Full companion code: https://github.com/peh-book/ch7
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: "{{ .TeamName }}"
+  labels:
+    platform.io/managed-by: onboarding-api
+    platform.io/team:        "{{ .TeamName }}"
+    platform.io/tier:        "{{ .Tier }}"
+    platform.io/cost-center: "{{ .CostCenter }}"
+    # Enable Istio sidecar injection for all pods in this namespace
+    istio-injection: enabled
+  annotations:
+    backstage.io/team-url:    "https://portal.example.com/catalog/default/group/{{ .TeamName }}"
+    platform.io/slack-channel: "#{{ .TeamName }}"

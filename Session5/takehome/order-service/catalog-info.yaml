@@ -1,0 +1,17 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: order-service
+  description: order-service service
+  annotations:
+    github.com/project-slug: platform-org/order-service
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - nodejs
+    - backend
+spec:
+  type: service
+  lifecycle: experimental
+  owner: team-alpha
+  system: platform
+  providesApis: []

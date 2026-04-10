@@ -1,0 +1,46 @@
+# crossplane-providers.yaml
+# Provider configurations for Crossplane
+# Uses the Kubernetes provider and Helm provider for local Kind clusters
+# No cloud provider dependencies — everything runs locally
+
+---
+# Kubernetes provider — manages native K8s resources via Crossplane
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-kubernetes
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-kubernetes:v0.13.0
+---
+apiVersion: kubernetes.crossplane.io/v1alpha1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: InjectedIdentity
+---
+# Composition function — required for v2 Composition pipeline mode
+# Replaces the legacy inline resources/patchSets syntax with a function-based model
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-patch-and-transform
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform:v0.7.0
+---
+# Helm provider — deploys Helm charts as Crossplane managed resources
+apiVersion: pkg.crossplane.io/v1
+kind: Provider
+metadata:
+  name: provider-helm
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/provider-helm:v0.18.1
+---
+apiVersion: helm.crossplane.io/v1beta1
+kind: ProviderConfig
+metadata:
+  name: default
+spec:
+  credentials:
+    source: InjectedIdentity

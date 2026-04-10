@@ -1,0 +1,111 @@
+# templates/team-rbac.yaml
+# ==========================
+# Go templates for team RBAC roles and role bindings.
+# Generated per-namespace by the onboarding API.
+#
+# Template variables:
+#   .TeamName   — team slug (e.g. "team-beta")
+#   .Namespace  — Kubernetes namespace (e.g. "team-beta")
+#
+# SECURITY NOTE (DS18): The team-developer role intentionally omits
+# "delete" on secrets. Developers can create and update secrets
+# (e.g. for CI/CD pipeline credentials) but cannot delete them.
+# Accidental or malicious secret deletion is an irreversible operation
+# and should require team-admin or platform-admin privilege.
+#
+# Group naming convention for Keycloak OIDC groups:
+#   oidc:{{ .TeamName }}-admins
+#   oidc:{{ .TeamName }}-developers
+#   oidc:{{ .TeamName }}-viewers
+#
+# Full companion code: https://github.com/peh-book/ch7
+
+---
+# team-developer role: deploy and debug, no destructive operations on secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: team-developer
+  namespace: "{{ .Namespace }}"
+rules:
+  - apiGroups: ["", "apps", "batch"]
+    resources: ["pods", "deployments", "services", "configmaps", "jobs"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    # Developers can read and create/update secrets (e.g. for pipeline creds)
+    # but NOT delete — deletion is irreversible and requires elevated privilege.
+    verbs: ["get", "list", "create", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["pods/log", "pods/exec", "pods/portforward"]
+    verbs: ["get", "create"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: team-developers-binding
+  namespace: "{{ .Namespace }}"
+subjects:
+  - kind: Group
+    # Keycloak OIDC groups — must use camelCase in Go templates (no hyphens)
+    name: "oidc:{{ .TeamName }}-developers"
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: team-developer
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# team-admin role: full namespace control including secret deletion
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: team-admin
+  namespace: "{{ .Namespace }}"
+rules:
+  - apiGroups: ["", "apps", "batch", "rbac.authorization.k8s.io"]
+    resources: ["*"]
+    verbs: ["*"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: team-admins-binding
+  namespace: "{{ .Namespace }}"
+subjects:
+  - kind: Group
+    name: "oidc:{{ .TeamName }}-admins"
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: team-admin
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# team-viewer role: read-only access for stakeholders and auditors
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: team-viewer
+  namespace: "{{ .Namespace }}"
+rules:
+  - apiGroups: ["", "apps", "batch"]
+    resources: ["pods", "deployments", "services", "configmaps", "jobs", "replicasets"]
+    verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: team-viewers-binding
+  namespace: "{{ .Namespace }}"
+subjects:
+  - kind: Group
+    name: "oidc:{{ .TeamName }}-viewers"
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: team-viewer
+  apiGroup: rbac.authorization.k8s.io

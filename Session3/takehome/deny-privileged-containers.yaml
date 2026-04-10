@@ -1,0 +1,108 @@
+# OPA Gatekeeper Policy: Deny Privileged Containers
+# Prevents containers from running with elevated privileges (reduces attack surface)
+
+---
+apiVersion: templates.gatekeeper.sh/v1
+kind: ConstraintTemplate
+metadata:
+  name: k8sdenyprivilegedcontainers
+  annotations:
+    description: "Denies privileged containers and unsafe security contexts"
+    examples: |
+      Non-compliant (privileged):
+      securityContext:
+        privileged: true  # VIOLATION
+
+      Non-compliant (runAsRoot):
+      securityContext:
+        runAsUser: 0  # Root - VIOLATION
+
+      Compliant (non-privileged):
+      securityContext:
+        privileged: false
+        allowPrivilegeEscalation: false
+        runAsNonRoot: true
+        runAsUser: 1000
+
+spec:
+  crd:
+    spec:
+      names:
+        kind: K8sDenyPrivilegedContainers
+      validation:
+        openAPIV3Schema:
+          type: object
+          properties:
+            exemptImages:
+              type: array
+              items:
+                type: string
+              description: "Images exempt from this policy (e.g., system pods)"
+
+  targets:
+    - target: admission.k8s.gatekeeper.sh
+      rego: |
+        package k8sdenyprivilegedcontainers
+
+        # Deny privileged containers
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          not is_exempt_image(container.image)
+          is_privileged(container)
+          msg := sprintf(
+            "Container '%v' is running in privileged mode",
+            [container.name]
+          )
+        }
+
+        # Deny containers running as root
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          not is_exempt_image(container.image)
+          is_running_as_root(container)
+          msg := sprintf(
+            "Container '%v' must not run as root (UID 0)",
+            [container.name]
+          )
+        }
+
+        # Deny privilege escalation
+        violation[{"msg": msg}] {
+          container := input_containers[_]
+          not is_exempt_image(container.image)
+          allows_privilege_escalation(container)
+          msg := sprintf(
+            "Container '%v' must set allowPrivilegeEscalation to false",
+            [container.name]
+          )
+        }
+
+        # Helper: check if container is privileged
+        is_privileged(container) {
+          container.securityContext.privileged == true
+        }
+
+        # Helper: check if running as root
+        is_running_as_root(container) {
+          container.securityContext.runAsUser == 0
+        }
+
+        # Helper: check if privilege escalation allowed
+        allows_privilege_escalation(container) {
+          container.securityContext.allowPrivilegeEscalation != false
+        }
+
+        # Helper: check if image is exempt
+        is_exempt_image(image) {
+          exempt := input.parameters.exemptImages[_]
+          startswith(image, exempt)
+        }
+
+        # Get all containers
+        input_containers[c] {
+          c := input.review.object.spec.containers[_]
+        }
+
+        input_containers[c] {
+          c := input.review.object.spec.initContainers[_]
+        }

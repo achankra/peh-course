@@ -1,0 +1,16 @@
+apiVersion: database.platform.io/v1alpha1
+kind: PostgreSQLClaim
+metadata:
+  name: order-service-db
+  namespace: team-alpha
+spec:
+  parameters:
+    storageGB: 20
+    version: "15"
+    tier: development
+    enableBackups: false
+  compositionSelector:
+    matchLabels:
+      provider: kubernetes
+  writeConnectionSecretToRef:
+    name: order-service-db-connection

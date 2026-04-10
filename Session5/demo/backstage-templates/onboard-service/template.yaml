@@ -1,0 +1,86 @@
+# templates/onboard-service/template.yaml
+# =========================================
+# Backstage Scaffolder Template — PR-based service onboarding
+#
+# This template enables developers to register an existing service in the
+# software catalog by raising a pull request, without writing YAML by hand.
+# The PR-based approach means platform teams retain oversight: entries are
+# reviewed before they appear in the catalog.
+#
+# How to register this template:
+#   Add to app-config.yaml under catalog.locations:
+#     - type: url
+#       target: https://github.com/platform-org/backstage/blob/main/templates/onboard-service/template.yaml
+#
+# Full companion code: https://github.com/peh-book/ch6
+
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: onboard-existing-service
+  title: Onboard Existing Service to Catalog
+  description: Register an existing service in the software catalog via pull request
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Service Information
+      required: [name, description, owner]
+      properties:
+        name:
+          title: Service Name
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          description: Lowercase, hyphen-separated (e.g. payment-service)
+        description:
+          title: Description
+          type: string
+        owner:
+          title: Owner Team
+          type: string
+          ui:field: OwnerPicker
+        repoUrl:
+          title: Repository URL
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+
+  steps:
+    - id: fetch-template
+      name: Generate catalog-info.yaml
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+
+    - id: create-pull-request
+      name: Raise PR to register service
+      action: publish:github:pull-request
+      input:
+        repoUrl: ${{ parameters.repoUrl }}
+        branchName: onboard-${{ parameters.name }}-to-catalog
+        title: 'feat: Onboard ${{ parameters.name }} to developer portal'
+        description: |
+          This PR adds `catalog-info.yaml` to register **${{ parameters.name }}**
+          in the NewTech developer portal.
+
+          Once merged, the service will appear in the catalog with:
+          - Owner: ${{ parameters.owner }}
+          - TechDocs enabled
+          - Backstage discovery annotation
+
+          Raised automatically via the Onboarding Scaffolder template.
+
+  # Output — surface the PR URL to the developer after execution
+  # so they can review and merge without hunting for the link.
+  output:
+    links:
+      - title: Pull Request
+        url: ${{ steps["create-pull-request"].output.remoteUrl }}
+        icon: github

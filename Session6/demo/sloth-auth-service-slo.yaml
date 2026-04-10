@@ -1,0 +1,76 @@
+# Chapter 13: Sloth SLO Specification for Auth Service
+# Listing 13.1 - SLO definition matching the manuscript's auth-service example
+# Sloth generates Prometheus recording and alerting rules from this spec.
+#
+# Usage:
+#   sloth generate -i sloth-auth-service-slo.yaml -o auth-slo-rules.yaml
+#   kubectl apply -f auth-slo-rules.yaml
+#
+# Generated metrics include multi-window, multi-burn-rate recording rules
+# and alerting rules for error budget tracking.
+
+apiVersion: sloth.slok.dev/v1
+kind: PrometheusServiceLevel
+metadata:
+  name: auth-service-slos
+  namespace: monitoring
+spec:
+  service: auth-service
+  labels:
+    team: platform-engineering
+
+  slos:
+    # Availability SLO - 99.95% of auth requests succeed
+    - name: "availability"
+      objective: 99.95
+      description: "Percentage of successful authentication requests"
+
+      sli:
+        events:
+          # Failed auth requests (5xx errors)
+          errorQuery: sum(rate(http_requests_total{job="auth-service",code=~"(5..)"}[{{.window}}]))
+          # All auth requests
+          totalQuery: sum(rate(http_requests_total{job="auth-service"}[{{.window}}]))
+
+      alerting:
+        name: AuthAvailabilityAlert
+        labels:
+          category: availability
+        annotations:
+          summary: "Auth service SLO at risk"
+        pageAlert:
+          labels:
+            severity: critical
+        ticketAlert:
+          labels:
+            severity: warning
+
+    # Latency SLO - 95% of requests respond within 200ms
+    - name: "latency"
+      objective: 95
+      description: "95th percentile latency under 200ms"
+
+      sli:
+        events:
+          # Requests slower than 200ms are "errors" for this SLO
+          errorQuery: |
+            (
+              sum(rate(http_requests_total{job="auth-service"}[{{.window}}]))
+              -
+              sum(rate(http_request_duration_seconds_bucket{job="auth-service",le="0.2"}[{{.window}}]))
+            )
+          # All requests
+          totalQuery: sum(rate(http_requests_total{job="auth-service"}[{{.window}}]))
+
+      alerting:
+        name: AuthLatencyAlert
+        labels:
+          category: latency
+        annotations:
+          summary: "Auth service latency SLO at risk"
+        pageAlert:
+          labels:
+            severity: critical
+        ticketAlert:
+          labels:
+            severity: warning

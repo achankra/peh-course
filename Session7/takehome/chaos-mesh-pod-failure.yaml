@@ -1,0 +1,102 @@
+# Chaos Mesh Pod Failure Experiments
+# Demonstrates pod-kill chaos to test self-healing (restarts, HPA, PDB)
+#
+# Prerequisites:
+#   1. Chaos Mesh installed: helm install chaos-mesh chaos-mesh/chaos-mesh -n chaos-mesh
+#   2. Target namespace and workloads exist (see setup below)
+#
+# Setup target workloads:
+#   kubectl create namespace chaos-testing
+#   kubectl create deployment demo-app --image=nginx:alpine --replicas=3 -n chaos-testing
+#   kubectl wait --for=condition=available deployment/demo-app -n chaos-testing --timeout=60s
+
+---
+# Experiment 1: Kill a single pod
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: pod-kill-single
+  namespace: chaos-testing
+spec:
+  action: pod-kill
+  mode: one
+  duration: "30s"
+  selector:
+    namespaces:
+      - chaos-testing
+    labelSelectors:
+      app: demo-app
+
+---
+# Experiment 2: Kill 50% of pods
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: pod-kill-percentage
+  namespace: chaos-testing
+spec:
+  action: pod-kill
+  mode: fixed-percent
+  value: "50"
+  duration: "1m"
+  selector:
+    namespaces:
+      - chaos-testing
+    labelSelectors:
+      app: demo-app
+
+---
+# Experiment 3: Kill a specific container (not the whole pod)
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: container-kill-experiment
+  namespace: chaos-testing
+spec:
+  action: container-kill
+  mode: one
+  duration: "30s"
+  containerNames:
+    - nginx
+  selector:
+    namespaces:
+      - chaos-testing
+    labelSelectors:
+      app: demo-app
+
+---
+# Experiment 4: Pod failure (makes pod unavailable without killing it)
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: pod-failure-experiment
+  namespace: chaos-testing
+spec:
+  action: pod-failure
+  mode: one
+  duration: "30s"
+  selector:
+    namespaces:
+      - chaos-testing
+    labelSelectors:
+      app: demo-app
+
+---
+# Schedule: Repeat pod-kill every 5 minutes
+apiVersion: chaos-mesh.org/v1alpha1
+kind: Schedule
+metadata:
+  name: pod-kill-schedule
+  namespace: chaos-testing
+spec:
+  schedule: "*/5 * * * *"
+  type: PodChaos
+  podChaos:
+    action: pod-kill
+    mode: one
+    duration: "30s"
+    selector:
+      namespaces:
+        - chaos-testing
+      labelSelectors:
+        app: demo-app

@@ -1,0 +1,61 @@
+version: "3.8"
+services:
+  app:
+    build:
+      context: .
+      target: builder
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/order-service
+      
+      
+    command: npm run dev
+    depends_on:
+      
+      postgres:
+        condition: service_healthy
+      
+      
+
+  
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: order-service
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  
+
+  
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+
+volumes:
+  
+  postgres-data:
+  
+  

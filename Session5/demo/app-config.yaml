@@ -1,0 +1,102 @@
+# Chapter 6: Backstage Production Configuration
+# ===============================================
+# app-config.yaml for Backstage with Keycloak via the OIDC provider,
+# GitHub catalog discovery, and proxy settings.
+#
+# IMPORTANT: Backstage does not have a native 'keycloak' auth provider.
+# Use the generic 'oidc' provider pointed at your Keycloak realm.
+# Also register the OIDC backend module — see keycloak-oidc-module.ts.
+#
+# Full reference: https://backstage.io/docs/auth/oidc/
+#
+# Usage: Set environment variables, then:
+#   yarn start --config backstage-helm-values.yaml  (local/Kind)
+#   yarn start --config app-config.yaml             (production)
+
+app:
+  title: NewTech Developer Portal
+  baseUrl: https://portal.${DOMAIN}
+
+organization:
+  name: NewTech
+
+backend:
+  baseUrl: https://portal.${DOMAIN}
+  listen:
+    port: 7007
+    host: 0.0.0.0
+  database:
+    client: pg
+    connection:
+      host: ${POSTGRES_HOST}
+      port: ${POSTGRES_PORT}
+      user: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+
+# --- Authentication: Keycloak via OIDC ---
+# Backstage uses the generic 'oidc' provider for Keycloak.
+# The portal sign-in page is labelled 'oidc' which maps to your Keycloak realm.
+# Sign-in resolver matches the authenticated user's email to their
+# catalog User entity (emailMatchingUserEntityProfileEmail).
+auth:
+  environment: production
+  session:
+    secret: ${AUTH_SESSION_SECRET}
+  providers:
+    oidc:
+      production:
+        metadataUrl: ${KEYCLOAK_URL}/realms/platform/.well-known/openid-configuration
+        clientId: ${KEYCLOAK_CLIENT_ID}
+        clientSecret: ${KEYCLOAK_CLIENT_SECRET}
+        prompt: auto
+        signIn:
+          resolvers:
+            - resolver: emailMatchingUserEntityProfileEmail
+  signInPage: oidc
+
+# --- Software Catalog ---
+catalog:
+  rules:
+    - allow: [Component, System, API, Resource, Location, Template, Group, User]
+  locations:
+    # GitHub org-wide discovery — auto-ingests catalog-info.yaml from all repos
+    - type: github-discovery
+      target: https://github.com/platform-org
+    # Explicit registration for the Chapter 5 demo app
+    - type: url
+      target: https://github.com/platform-org/demo-app/blob/main/catalog-info.yaml
+  providers:
+    github:
+      platformOrg:
+        organization: platform-org
+        catalogPath: /catalog-info.yaml
+        schedule:
+          frequency: { minutes: 30 }
+          timeout: { minutes: 3 }
+
+# --- TechDocs ---
+# Local config for development/Kind. For production, switch to S3 + external builder.
+# See README.md for S3 migration steps.
+techdocs:
+  builder: local
+  generator:
+    runIn: local
+  publisher:
+    type: local
+
+# --- Proxy for internal platform services ---
+# Enables Backstage plugins to communicate with backend services.
+proxy:
+  endpoints:
+    /argocd/api:
+      target: https://argocd.platform.${DOMAIN}/api/v1
+      headers:
+        Cookie: argocd.token=${ARGOCD_TOKEN}
+    /grafana/api:
+      target: https://grafana.platform.${DOMAIN}
+      headers:
+        Authorization: Bearer ${GRAFANA_TOKEN}
+    /pagerduty:
+      target: https://api.pagerduty.com
+      headers:
+        Authorization: Token token=${PAGERDUTY_TOKEN}

@@ -1,0 +1,116 @@
+name: Backend Pipeline
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        type: string
+        required: true
+        description: Name of the service to build and deploy
+      environment:
+        type: string
+        required: true
+        description: Target environment (dev, staging, prod)
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.build.outputs.image-tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test -- --coverage
+
+      - name: Build application
+        id: build
+        run: |
+          npm run build
+          echo "image-tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Upload test coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/coverage-final.json
+          flags: ${{ inputs.service-name }}
+
+  security-scan:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run SAST security scan
+        run: npm audit --audit-level=moderate
+
+      - name: Run ESLint
+        run: npm run lint
+
+  container-build:
+    needs: security-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and push container
+        uses: ./.github/actions/container-build
+        with:
+          image-name: ${{ inputs.service-name }}
+          registry: ghcr.io
+          dockerfile: Dockerfile
+
+  deploy:
+    needs: container-build
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
+      url: https://${{ inputs.service-name }}-${{ inputs.environment }}.example.com
+    steps:
+      # Fetch full history so we can commit the manifest update back to Git.
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # GitOps pattern: update the image tag in the deployment manifest and
+      # push the change to Git. ArgoCD detects the diff and reconciles the
+      # cluster — we never mutate the cluster directly from the pipeline.
+      # Using kubectl set image would bypass Git as the source of truth and
+      # cause ArgoCD drift detection to either revert or flag the change.
+      - name: Update Kubernetes manifest
+        run: |
+          yq e -i \
+            ".spec.template.spec.containers[0].image = \"ghcr.io/${{ github.repository }}/${{ inputs.service-name }}:${{ github.sha }}\"" \
+            k8s/${{ inputs.service-name }}/deployment.yaml
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add k8s/${{ inputs.service-name }}/deployment.yaml
+          git commit -m "chore: update ${{ inputs.service-name }} image to ${{ github.sha }} [${{ inputs.environment }}] [skip ci]"
+          git push
+
+      - name: Run smoke tests
+        run: |
+          ./scripts/smoke-tests.sh ${{ inputs.environment }}

@@ -1,0 +1,106 @@
+# catalog-info.yaml — Demo App from Chapter 5
+# =============================================
+# Place this file at the root of the demo-app repository.
+# When Backstage's GitHub discovery runs (or when you register the URL
+# explicitly), it will ingest this entity into the software catalog.
+#
+# Integration annotations connect the service to four platform tools:
+#   - ArgoCD:      visualise deployment status (Chapter 5 GitOps setup)
+#   - Prometheus:  alert rules linked to service SLOs (Chapter 4)
+#   - Grafana:     dashboard selector for the service metrics (Chapter 4)
+#   - PagerDuty:   on-call escalation for production incidents
+#
+# PagerDuty is an incident management platform. The annotation below links
+# this catalog entity to a specific PagerDuty service, so the Backstage
+# PagerDuty plugin can surface on-call schedules and open incidents
+# directly on the component page — without leaving the portal.
+#
+# Full companion code: https://github.com/peh-book/ch6
+
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: demo-app
+  description: Platform demo application with OpenTelemetry instrumentation
+  annotations:
+    # TechDocs: generate docs from the mkdocs.yml in this repo
+    backstage.io/techdocs-ref: dir:.
+    # Source location for the "View Source" link on the component page
+    backstage.io/source-location: url:https://github.com/platform-org/demo-app
+    # ArgoCD plugin — matches the Application name deployed in Chapter 5
+    argocd/app-name: pilot-demo-app
+    # Prometheus plugin — references the alert rule group for this service
+    prometheus.io/rule: demo-app-alerts
+    # Grafana plugin — selects dashboards tagged with this label
+    grafana/dashboard-selector: demo-app
+    # PagerDuty plugin — links to the on-call service for production incidents
+    pagerduty.com/service-id: ${PAGERDUTY_SERVICE_ID}
+  tags:
+    - nodejs
+    - kubernetes
+    - opentelemetry
+    - pilot-program
+  links:
+    - url: https://grafana.platform.${DOMAIN}/d/demo-app
+      title: Grafana Dashboard
+      icon: dashboard
+    - url: https://argocd.platform.${DOMAIN}/applications/pilot-demo-app
+      title: ArgoCD Application
+      icon: cloud
+
+spec:
+  type: service
+  lifecycle: production
+  owner: pilot-team-alpha
+  system: pilot-program
+  providesApis:
+    - demo-api
+  dependsOn:
+    - resource:default/postgresql
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: demo-api
+  description: Demo application REST API
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: openapi
+  lifecycle: production
+  owner: pilot-team-alpha
+  system: pilot-program
+  definition:
+    $text: ./api/openapi.yaml
+
+---
+# Organisational structure — import groups and users BEFORE registering
+# Component entities so that ownership references resolve correctly.
+# See org.yaml in the companion repo for the full organisational hierarchy.
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: pilot-team-alpha
+  description: Pilot team operating the demo application
+spec:
+  type: team
+  profile:
+    displayName: Pilot Team Alpha
+    email: pilot-team@example.com
+  children: []
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: maria.garcia
+  annotations:
+    # Keycloak user ID — used by the OIDC sign-in resolver
+    keycloak.org/id: ${KEYCLOAK_USER_ID}
+spec:
+  profile:
+    displayName: Maria Garcia
+    email: maria.garcia@example.com
+  memberOf:
+    - pilot-team-alpha

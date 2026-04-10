@@ -1,0 +1,106 @@
+# templates/backstage-template.yaml
+# ====================================
+# Backstage Scaffolder Template — Node.js backend service bootstrapper
+#
+# This template calls the Chapter 7 onboarding API via http:backstage:request,
+# then publishes the repository and registers the catalog entry.
+# It demonstrates how the Backstage UI integrates with the onboarding API
+# without duplicating validation logic — the API performs authoritative checks.
+#
+# Changes from draft:
+#   DS33: repoUrl now references {{parameters.org}} rather than hardcoded 'org'
+#   DS34: added output.links block so the developer gets a direct repo link
+#
+# Full companion code: https://github.com/peh-book/ch7
+
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: nodejs-backend-service
+  title: Node.js Backend Service
+  description: >
+    Bootstrap a new Node.js backend service — provisions a Kubernetes namespace,
+    RBAC, resource quota, GitHub repository, and catalog entry in one step.
+spec:
+  owner: platform-team
+  type: service
+
+  parameters:
+    - title: Service Details
+      required: [name, team, org]
+      properties:
+        name:
+          title: Service Name
+          type: string
+          pattern: '^[a-z][a-z0-9-]*$'
+          description: Lowercase, hyphen-separated (e.g. order-service)
+        team:
+          title: Owning Team
+          type: string
+          ui:field: OwnerPicker
+          description: The team that will own and operate this service
+        org:
+          title: GitHub Organisation
+          type: string
+          description: GitHub org where the repository will be created (e.g. platform-org)
+          default: platform-org
+        tier:
+          title: Resource Tier
+          type: string
+          enum: [starter, standard, enterprise]
+          default: starter
+          description: Determines Kubernetes resource quota for the namespace
+
+  steps:
+    - id: fetch-template
+      name: Fetch service skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name:  ${{ parameters.name }}
+          team:  ${{ parameters.team }}
+          org:   ${{ parameters.org }}
+
+    # Call the Chapter 7 onboarding API — provisions namespace, RBAC, quota.
+    # Parameter validation runs here a second time (authoritative server-side check).
+    - id: call-onboarding-api
+      name: Provision team environment via onboarding API
+      action: http:backstage:request
+      input:
+        method: POST
+        path: /api/proxy/onboarding/projects
+        body:
+          name:     ${{ parameters.name }}
+          team:     ${{ parameters.team }}
+          tier:     ${{ parameters.tier }}
+          template: nodejs-backend
+
+    - id: publish-repo
+      name: Create GitHub repository
+      action: publish:github
+      input:
+        # org is now a parameter — no hardcoded value
+        repoUrl: github.com?owner=${{ parameters.org }}&repo=${{ parameters.name }}
+        description: ${{ parameters.name }} service owned by ${{ parameters.team }}
+        defaultBranch: main
+        repoVisibility: private
+
+    - id: register-catalog
+      name: Register in Backstage catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps["publish-repo"].output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  # Output — surface the new repo URL to the developer immediately after
+  # the workflow completes so they can clone, review, and merge without
+  # hunting for the link. A missing output block is a silent UX failure.
+  output:
+    links:
+      - title: Source Repository
+        url:   ${{ steps["publish-repo"].output.remoteUrl }}
+        icon:  github
+      - title: Catalog Entry
+        url:   ${{ steps["register-catalog"].output.entityRef }}
+        icon:  catalog
