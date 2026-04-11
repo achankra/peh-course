@@ -317,10 +317,116 @@ class CostAnalyzer:
         return json.dumps(data, indent=2)
 
 
+def run_demo_mode(analyzer: CostAnalyzer, output_format: str):
+    """Run with simulated data to demonstrate cost analysis capabilities.
+
+    Used when Metrics Server is not installed (common in Kind clusters).
+    Shows realistic output so students understand what the tool does.
+    """
+    import random
+    random.seed(42)
+
+    print("=" * 60)
+    print("DEMO MODE — Metrics Server not detected, using simulated data")
+    print("In production, install Metrics Server: kubectl apply -f")
+    print("https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml")
+    print("=" * 60)
+
+    sample_pods = [
+        ("team-alpha", "checkout-api-7d8f9b6c4-x2k9p", "checkout-api",
+         {"cpu": "500m", "memory": "512Mi"}, {"cpu": "1000m", "memory": "1Gi"},
+         {"cpu": "95m", "memory": "128Mi"}),
+        ("team-alpha", "payment-svc-5c6d7e8f-m3n4o", "payment-svc",
+         {"cpu": "250m", "memory": "256Mi"}, {"cpu": "500m", "memory": "512Mi"},
+         {"cpu": "210m", "memory": "220Mi"}),
+        ("team-alpha", "notification-worker-9a8b7c-q5r6s", "notification-worker",
+         {"cpu": "1000m", "memory": "2Gi"}, {"cpu": "2000m", "memory": "4Gi"},
+         {"cpu": "45m", "memory": "180Mi"}),
+        ("team-beta", "inventory-api-3e4f5a6b-t7u8v", "inventory-api",
+         {"cpu": "200m", "memory": "256Mi"}, {"cpu": "400m", "memory": "512Mi"},
+         {"cpu": "185m", "memory": "240Mi"}),
+        ("team-beta", "search-indexer-1b2c3d4e-w9x0y", "search-indexer",
+         {"cpu": "100m", "memory": "128Mi"}, {"cpu": "200m", "memory": "256Mi"},
+         {"cpu": "95m", "memory": "122Mi"}),
+        ("team-beta", "analytics-batch-6f7g8h9i-z1a2b", "analytics-batch",
+         {"cpu": "2000m", "memory": "4Gi"}, {"cpu": "4000m", "memory": "8Gi"},
+         {"cpu": "120m", "memory": "350Mi"}),
+        ("monitoring", "prometheus-server-0", "prometheus",
+         {"cpu": "500m", "memory": "1Gi"}, {"cpu": "1000m", "memory": "2Gi"},
+         {"cpu": "310m", "memory": "680Mi"}),
+        ("monitoring", "grafana-5d6e7f8g-c3d4e", "grafana",
+         {"cpu": "100m", "memory": "128Mi"}, {"cpu": "200m", "memory": "256Mi"},
+         {"cpu": "82m", "memory": "105Mi"}),
+    ]
+
+    for ns, pod_name, container_name, requests, limits, usage in sample_pods:
+        metrics = ResourceMetrics(
+            requested_cpu=requests["cpu"],
+            requested_memory=requests["memory"],
+            limited_cpu=limits["cpu"],
+            limited_memory=limits["memory"],
+            used_cpu=usage["cpu"],
+            used_memory=usage["memory"],
+        )
+
+        cpu_util = analyzer._calculate_utilization(usage["cpu"], requests["cpu"], "cpu")
+        mem_util = analyzer._calculate_utilization(usage["memory"], requests["memory"], "memory")
+        is_over = cpu_util < 20 or mem_util < 20
+        recommendation = analyzer._generate_recommendation(cpu_util, mem_util, metrics)
+
+        analyzer.analyses.append(PodAnalysis(
+            pod_name=pod_name,
+            namespace=ns,
+            container_name=container_name,
+            metrics=metrics,
+            cpu_utilization_percent=cpu_util,
+            memory_utilization_percent=mem_util,
+            is_over_provisioned=is_over,
+            recommendation=recommendation,
+        ))
+
+    if output_format == "json":
+        print(analyzer.to_json())
+    else:
+        analyzer.print_summary()
+
+    # Cost estimation
+    print("\n=== Estimated Monthly Cost (simulated) ===")
+    print("Pricing: $0.048/vCPU-hour, $0.006/GiB-hour (on-demand Linux)")
+    total_req_cpu = sum(
+        analyzer.converter.cpu_to_millicores(a.metrics.requested_cpu)
+        for a in analyzer.analyses
+    )
+    total_used_cpu = sum(
+        analyzer.converter.cpu_to_millicores(a.metrics.used_cpu)
+        for a in analyzer.analyses
+    )
+    total_req_mem = sum(
+        analyzer.converter.memory_to_bytes(a.metrics.requested_memory)
+        for a in analyzer.analyses
+    )
+    total_used_mem = sum(
+        analyzer.converter.memory_to_bytes(a.metrics.used_memory)
+        for a in analyzer.analyses
+    )
+
+    hours_per_month = 730
+    cpu_cost = (total_req_cpu / 1000) * 0.048 * hours_per_month
+    mem_cost = (total_req_mem / (1024**3)) * 0.006 * hours_per_month
+    actual_cpu_cost = (total_used_cpu / 1000) * 0.048 * hours_per_month
+    actual_mem_cost = (total_used_mem / (1024**3)) * 0.006 * hours_per_month
+
+    print(f"  Requested:  CPU ${cpu_cost:,.2f} + Memory ${mem_cost:,.2f} = ${cpu_cost + mem_cost:,.2f}/mo")
+    print(f"  Actual use: CPU ${actual_cpu_cost:,.2f} + Memory ${actual_mem_cost:,.2f} = ${actual_cpu_cost + actual_mem_cost:,.2f}/mo")
+    print(f"  Waste:      ${(cpu_cost + mem_cost) - (actual_cpu_cost + actual_mem_cost):,.2f}/mo ({((1 - (actual_cpu_cost + actual_mem_cost) / (cpu_cost + mem_cost)) * 100):.0f}% over-provisioned)")
+    print(f"\n  Top savings opportunity: notification-worker and analytics-batch")
+    print(f"  Action: Right-size requests to match P95 usage + 20% headroom")
+
+
 def main():
     """Main entry point"""
     import argparse
-    
+
     parser = argparse.ArgumentParser(
         description="Analyze Kubernetes resource costs and efficiency"
     )
@@ -340,18 +446,39 @@ def main():
         default="text",
         help="Output format (default: text)"
     )
-    
+    parser.add_argument(
+        "--demo",
+        action="store_true",
+        help="Run with simulated data (when Metrics Server is not installed)"
+    )
+
     args = parser.parse_args()
-    
+
     analyzer = CostAnalyzer()
-    
+
+    # Check if Metrics Server is available
+    metrics_available = False
+    if not args.demo:
+        try:
+            result = subprocess.run(
+                ["kubectl", "top", "pods", "-A", "--no-headers"],
+                capture_output=True, text=True, timeout=10
+            )
+            metrics_available = result.returncode == 0 and result.stdout.strip() != ""
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            metrics_available = False
+
+    if args.demo or not metrics_available:
+        run_demo_mode(analyzer, args.output_format)
+        return
+
     if args.all_namespaces:
         namespaces = analyzer.client.get_namespaces()
         for ns in namespaces:
             analyzer.analyze_namespace(ns)
     else:
         analyzer.analyze_namespace(args.namespace)
-    
+
     if args.output_format == "json":
         print(analyzer.to_json())
     else:

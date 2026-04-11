@@ -1,24 +1,29 @@
-# Chapter 13: NetworkChaos Experiment
-# Listing 13.3 - Chaos Mesh network delay experiment
+# Session 7: NetworkChaos Experiment
 # Injects 100ms latency with 10ms jitter to all pods matching the selector
-# in the production namespace. Runs for 5 minutes every Monday at 9 AM.
+# in the team-alpha namespace. Runs for 5 minutes as a one-shot experiment.
+#
+# Prerequisites:
+#   1. Chaos Mesh installed: helm install chaos-mesh chaos-mesh/chaos-mesh -n chaos-mesh --create-namespace
+#   2. Target namespace exists: kubectl get ns team-alpha
+#   3. Deploy a target workload:
+#      kubectl create deployment api-service --image=nginx:alpine --replicas=2 -n team-alpha
+#      kubectl label deployment api-service app=api-service -n team-alpha
+#      kubectl wait --for=condition=available deployment/api-service -n team-alpha --timeout=60s
 
 apiVersion: chaos-mesh.org/v1alpha1
 kind: NetworkChaos
 metadata:
   name: api-latency-test
-  namespace: production
+  namespace: team-alpha
 spec:
   action: delay
   mode: all
   selector:
     namespaces:
-      - production
+      - team-alpha
     labelSelectors:
       app: api-service
   delay:
     latency: "100ms"
     jitter: "10ms"
   duration: "5m"
-  scheduler:
-    cron: "0 9 * * 1"  # Every Monday at 9 AM
