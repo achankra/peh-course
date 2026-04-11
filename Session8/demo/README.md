@@ -13,10 +13,8 @@ pip3 install scikit-learn pyyaml --break-system-packages
 ## Steps
 ```bash
 # 1. AI-POWERED: RAG document search (no API key)
+# Runs sample queries automatically and shows retrieved docs with relevance scores
 python3 rag-platform-docs.py
-# Try: "How do I create a new service?"
-# Try: "What are the RBAC policies?"
-# Try: "How do I set up monitoring?"
 
 # 2. AI-POWERED: Multi-agent incident response
 python3 incident-agent.py

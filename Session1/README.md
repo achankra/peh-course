@@ -35,13 +35,13 @@ python3 verify_module.py
 
 | Folder | What's Inside |
 |---|---|
-| [demo/](demo/) | Platform maturity assessment (live with audience) |
+| [demo/](demo/) | Platform maturity assessment (interactive) |
 | [takehome/](takehome/) | Deep analysis: design principles checklist, DevEx survey, friction analyzer, KPI baseline |
 
 ## Quick Start
 
 ```bash
-# Live demo
+# Demo
 cd demo
 python3 platform-maturity-assessment.py
 

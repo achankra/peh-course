@@ -43,7 +43,7 @@ python3 verify_module.py
 ## Quick Start
 
 ```bash
-# Live demo
+# Demo
 cd demo
 kubectl apply -f chaos-network-delay.yaml
 python3 chaos-runner.py

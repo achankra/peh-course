@@ -27,10 +27,8 @@ ls -la generated-service/
 cat backstage-templates/onboard-service/template.yaml
 
 # 6. AI-POWERED: Search platform docs with RAG (no API key needed)
+# Runs sample queries automatically and shows retrieved docs with relevance scores
 python3 rag-platform-docs.py
-# Try: "How do I create a new service?"
-# Try: "What are the backup policies?"
-# Try: "How do I set up monitoring?"
 ```
 
 ## Key Concepts

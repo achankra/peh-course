@@ -42,7 +42,7 @@ python3 verify_module.py
 ## Quick Start
 
 ```bash
-# Live demo
+# Demo
 cd demo
 python3 project-bootstrapper.py
 python3 rag-platform-docs.py

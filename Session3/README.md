@@ -43,7 +43,7 @@ python3 verify_module.py
 ## Quick Start
 
 ```bash
-# Live demo
+# Demo
 cd demo
 kubectl apply -f crossplane-providers.yaml
 kubectl apply -f xrd-postgresql.yaml

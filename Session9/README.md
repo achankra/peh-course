@@ -46,7 +46,7 @@ python3 verify_module.py
 ## Quick Start
 
 ```bash
-# Live demo
+# Demo
 cd demo
 python3 team-topology-generator.py
 python3 platform-kpi-collector.py

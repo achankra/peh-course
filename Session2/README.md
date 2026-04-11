@@ -45,7 +45,7 @@ python3 verify_module.py
 # Create the cluster
 kind create cluster --name workshop
 
-# Live demo
+# Demo
 cd demo
 pip3 install pulumi pulumi-kubernetes --break-system-packages
 python3 namespace-provisioner.py
