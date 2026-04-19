@@ -60,3 +60,4 @@ All tests should pass if the onboarding files are correctly structured.
 - Customize project-bootstrapper.py for your org's service structure
 - Create a catalog-info.yaml for one of your existing services
 - Document your ideal onboarding flow (current vs. target)
+- Run [Portal IQ](https://portal-iq.platformetrics.com/) against your org's requirements and document your portal recommendation (build vs. buy)

@@ -34,7 +34,13 @@ ls -la generated-service/
 # Developers fill in a form, the template generates the full project.
 cat backstage-templates/onboard-service/template.yaml
 
-# 6. AI-POWERED: Search platform docs with RAG (no API key needed)
+# 6. Choosing your portal: build vs. buy
+# You've now seen what Backstage looks like hands-on. When you take this back to your org,
+# use Portal IQ to evaluate whether Backstage OSS is the right choice for your team,
+# or whether a managed solution like Port, Cortex, or Harness IDP is a better fit.
+# Run it at: https://portal-iq.platformetrics.com
+
+# 7. AI-POWERED: Search platform docs with RAG (no API key needed)
 # Uses TF-IDF to index platform documentation and answer natural language queries.
 # Runs sample queries automatically and shows retrieved docs with relevance scores.
 python3 rag-platform-docs.py

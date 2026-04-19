@@ -67,6 +67,8 @@ The course standardizes on one tool per job to keep setup simple and eliminate "
 | **Web Framework** | Flask | Self-service onboarding API |
 | **Language** | Python 3 | All scripts and automation |
 
+> **Note on Developer Portal:** The workshop uses Backstage as the reference portal. For evaluating alternatives (Port, Cortex, Harness IDP, OpsLevel, and more), see [Portal IQ](https://portal-iq.platformetrics.com/).
+
 > **Note on AI features:** Every AI demo has a local-only fallback (TF-IDF, heuristics) that runs without any API key. Claude integration is optional for those who want to explore LLM-powered capabilities.
 
 > **Looking for ArgoCD, Argo Rollouts, OpenCost, or other tools?** The book covers a broader set of tools across 14 chapters. See the [book repo](https://github.com/achankra/peh) for the full stack. This course focuses on the subset you can build and run in two days.
