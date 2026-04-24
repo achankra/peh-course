@@ -18,7 +18,7 @@ This document serves as a comprehensive terminology reference for the 2-day work
 | Atlantis | Tool for automating Terraform workflows in pull requests, enabling collaborative infrastructure changes. | https://www.runatlantis.io/ |
 | Backstage (Spotify) | Open-source developer portal platform providing a centralized hub for managing microservices, infrastructure, and documentation. | https://backstage.io/ |
 | Backup & Disaster Recovery | Processes and systems for protecting data and ensuring business continuity in case of failure or data loss. | https://velero.io/ |
-| Blast Radius | The scope or extent of potential impact from a failure, change, or deployment in a system. | https://www.gremlin.com/chaos-engineering/blast-radius/ |
+| Blast Radius | The scope or extent of potential impact from a failure, change, or deployment in a system. | [https://www.gremlin.com/chaos-engineering/blast-radius](https://www.linkedin.com/pulse/understanding-blast-radius-system-design-nitesh-kumar-sah-tpp3f/)/ |
 | Blue-Green Deployment | Deployment strategy where two identical production environments (blue and green) allow zero-downtime releases. | https://martinfowler.com/bliki/BlueGreenDeployment.html |
 | Bulkhead Pattern | Architectural pattern that isolates resources to prevent cascading failures across system components. | https://docs.microsoft.com/en-us/azure/architecture/patterns/bulkhead |
 | Canary Deployment | Deployment strategy that gradually rolls out changes to a subset of users to detect issues before full rollout. | https://semaphoreci.com/blog/canary-deployments |
