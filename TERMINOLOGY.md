@@ -31,8 +31,7 @@ This document serves as a comprehensive terminology reference for the 2-day work
 | Circuit Breaker | Design pattern that stops requests to a failing service temporarily to prevent cascading failures. | https://martinfowler.com/bliki/CircuitBreaker.html |
 | Claude (Anthropic) | Large language model created by Anthropic, used for natural language understanding and AI-powered applications. | https://www.anthropic.com/claude |
 | CNCF (Cloud Native Computing Foundation) | Vendor-neutral foundation hosting and promoting open-source cloud-native projects like Kubernetes and Prometheus. | https://www.cncf.io/ |
-| Cognitive Load | The amount of mental effort required to use a system; a key metric in measuring developer experience. | https://www.linkedin.com/pulse/cognitive-load-developer-experience-jeanpierre-urquhart |
-| Cognition as Code | Approach of encoding organizational knowledge and decision logic into automated systems and policies. | https://www.cortex.io/ |
+| Cognitive Load | The amount of mental effort required to use a system; a key metric in measuring developer experience. | [https://www.linkedin.com/pulse/cognitive-load-developer-experience-jeanpierre-urquhart](https://github.com/zakirullin/cognitive-load) |
 | Compliance as Code | Practice of encoding compliance requirements and policies as machine-readable code for automated enforcement. | https://www.viaduct.io/compliance-as-code |
 | Complicated-Subsystem Team | Team topology focused on managing complex technical subsystems requiring deep expertise. | https://teamtopologies.com/ |
 | Composition (Crossplane) | Crossplane feature that defines how composite resources are composed from primitive resources. | https://docs.crossplane.io/v1.13/concepts/compositions/ |
