@@ -19,7 +19,19 @@ The tool will guide you through questions and calculate maturity scores.
 """
 
 import json
+import math
+import os
 from typing import Dict, List, Tuple
+
+try:
+    import matplotlib
+    matplotlib.use("Agg")  # Non-interactive backend (no display needed)
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
+    import numpy as np
+    HAS_MATPLOTLIB = True
+except ImportError:
+    HAS_MATPLOTLIB = False
 
 
 class PlatformMaturityAssessment:
@@ -229,6 +241,118 @@ The assessment typically takes 5-10 minutes to complete.
 
         return report
 
+    def generate_radar_chart(self, filename: str = "maturity_radar.png") -> str:
+        """
+        Generate a radar (spider) chart visualization of maturity scores.
+
+        The chart uses the course's dark theme with teal accents to match
+        the slide deck aesthetic.
+
+        Args:
+            filename: Output image filename
+
+        Returns:
+            Path to the saved chart image, or empty string if matplotlib unavailable
+        """
+        if not self.scores:
+            print("No assessment data available. Run assessment first.")
+            return ""
+
+        if not HAS_MATPLOTLIB:
+            print("matplotlib not installed — skipping radar chart generation.")
+            print("Install with: pip install matplotlib numpy")
+            return ""
+
+        # --- Data preparation ---
+        labels = [self.dimensions[k]["name"] for k in self.scores]
+        values = [self.scores[k] for k in self.scores]
+
+        # Close the polygon by repeating the first value
+        num_dims = len(labels)
+        angles = np.linspace(0, 2 * math.pi, num_dims, endpoint=False).tolist()
+        values += values[:1]
+        angles += angles[:1]
+
+        # --- Chart styling (dark theme matching course slides) ---
+        DARK_BG = "#1A1A1A"
+        TEAL = "#00D4AA"
+        TEAL_FILL = "#00D4AA"
+        GRID_COLOR = "#333333"
+        TEXT_COLOR = "#FFFFFF"
+        LABEL_COLOR = "#CCCCCC"
+
+        fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
+        fig.patch.set_facecolor(DARK_BG)
+        ax.set_facecolor(DARK_BG)
+
+        # Draw the radar area
+        ax.plot(angles, values, color=TEAL, linewidth=2.5, linestyle="solid")
+        ax.fill(angles, values, color=TEAL_FILL, alpha=0.15)
+
+        # Plot score points
+        ax.scatter(angles[:-1], values[:-1], color=TEAL, s=80, zorder=5, edgecolors=DARK_BG, linewidths=1.5)
+
+        # Add score labels next to each point
+        for angle, value, label in zip(angles[:-1], values[:-1], labels):
+            ax.annotate(
+                f"{value:.1f}",
+                xy=(angle, value),
+                xytext=(8, 8),
+                textcoords="offset points",
+                fontsize=12,
+                fontweight="bold",
+                color=TEAL,
+            )
+
+        # Configure grid rings (1–5)
+        ax.set_ylim(0, 5)
+        ax.set_yticks([1, 2, 3, 4, 5])
+        ax.set_yticklabels(["1", "2", "3", "4", "5"], color=LABEL_COLOR, fontsize=9)
+        ax.yaxis.grid(True, color=GRID_COLOR, linewidth=0.5, linestyle="--")
+
+        # Configure dimension labels
+        ax.set_xticks(angles[:-1])
+        ax.set_xticklabels(labels, color=TEXT_COLOR, fontsize=11, fontweight="bold")
+        ax.xaxis.grid(True, color=GRID_COLOR, linewidth=0.5, linestyle="--")
+
+        # Spokes
+        ax.spines["polar"].set_color(GRID_COLOR)
+
+        # Title
+        overall = sum(self.scores.values()) / len(self.scores)
+        ax.set_title(
+            f"Platform Maturity Assessment\nOverall Score: {overall:.2f} / 5.0",
+            color=TEXT_COLOR,
+            fontsize=16,
+            fontweight="bold",
+            pad=30,
+        )
+
+        # Maturity level badge
+        if overall >= 4.5:
+            level = "Optimized"
+        elif overall >= 3.5:
+            level = "Advanced"
+        elif overall >= 2.5:
+            level = "Intermediate"
+        elif overall >= 1.5:
+            level = "Basic"
+        else:
+            level = "Initial"
+
+        fig.text(
+            0.5, 0.02,
+            f"Maturity Level: {level}  |  Platformetrics",
+            ha="center", color=LABEL_COLOR, fontsize=10,
+        )
+
+        plt.tight_layout()
+        plt.savefig(filename, dpi=150, facecolor=DARK_BG, bbox_inches="tight")
+        plt.close()
+
+        print(f"\nRadar chart saved to {filename}")
+        return filename
+
     def export_results(self, filename: str = "assessment_results.json") -> None:
         """
         Export assessment results to JSON file.
@@ -241,6 +365,7 @@ The assessment typically takes 5-10 minutes to complete.
             "overall_score": sum(self.scores.values()) / len(self.scores)
             if self.scores
             else 0,
+            "radar_chart": "maturity_radar.png" if os.path.exists("maturity_radar.png") else None,
         }
 
         with open(filename, "w") as f:
@@ -262,6 +387,9 @@ if __name__ == "__main__":
         # Generate and print report
         report = assessment.generate_report()
         print(report)
+
+        # Generate radar chart visualization
+        assessment.generate_radar_chart()
 
         # Export results
         assessment.export_results()
