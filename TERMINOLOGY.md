@@ -10,7 +10,7 @@ This document serves as a comprehensive terminology reference for the 2-day work
 | Admission Controller | Kubernetes components that intercept requests to the API server and can validate, mutate, or deny them based on policies. | https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/ |
 | AI Governance | Framework and policies for responsible, ethical, and compliant use of artificial intelligence systems in organizations. | [https://www.nist.gov/publications/artificial-intelligence-risk-management-framework](https://ai.wharton.upenn.edu/white-paper/artificial-intelligence-risk-governance/) |
 | Alert Correlation | Technique for grouping and analyzing related alerts to reduce alert fatigue and identify root causes. | https://grafana.com/docs/grafana/latest/alerting/ |
-| Anomaly Detection | ML technique to identify unusual patterns or deviations in system behavior, metrics, or data. | https://scikit-learn.org/stable/modules/unsupervised.html |
+| Anomaly Detection | ML technique to identify unusual patterns or deviations in system behavior, metrics, or data. | https://www.ibm.com/think/topics/anomaly-detection |
 | OWASP | Open Worldwide Application Security Project providing standards, frameworks, and tools for building secure applications. | https://owasp.org/ |
 | ArgoCD | GitOps continuous delivery tool for Kubernetes that automatically syncs application state from Git repositories. | https://argoproj.github.io/cd/ |
 | Artificial Intelligence (AI) | Computer systems designed to perform tasks that typically require human intelligence, such as learning and problem-solving. | https://www.anthropic.com/ |
