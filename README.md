@@ -45,7 +45,7 @@ The course standardizes on one tool per job to keep setup simple and eliminate "
 
 | Layer | Tool | Purpose |
 |---|---|---|
-| **Container Runtime** | Docker Desktop | Runs containers locally |
+| **Container Runtime** | Docker Desktop (or Colima / OrbStack) | Runs containers locally |
 | **Kubernetes** | Kind (Kubernetes in Docker) | Local multi-node clusters |
 | **Package Manager** | Helm | Installs Crossplane, Prometheus, Chaos Mesh into the cluster |
 | **IaC / Provisioning** | Pulumi (Python SDK) | Cluster and resource provisioning |
@@ -85,11 +85,32 @@ Minimal by design. You need a laptop, a terminal, and the tools below.
 - 20 GB free disk space
 - macOS, Linux, or Windows (with WSL2)
 
+### Container Runtime — Install Before Anything Else
+
+Everything in this course runs on Kubernetes via Kind, and Kind runs on Docker. You need a working container runtime before installing anything else.
+
+**Docker Desktop** is the recommended option — it's the most straightforward to set up and the best-documented path. Install it, start it, and confirm it's running with `docker info`. If Docker isn't running, nothing else in this course will work.
+
+Download: [docker.com/get-started](https://www.docker.com/get-started/)
+
+**Alternatives:** Docker Desktop requires a paid subscription for companies with 250+ employees or over $10M in revenue. If that applies to you, any of these will work as a drop-in replacement:
+
+- **Colima** (free, open-source) — `brew install colima docker && colima start`. Uses the standard Docker CLI, so Kind works without any extra config. This is the easiest alternative.
+- **OrbStack** (free for personal use) — Faster startup and lower memory usage than Docker Desktop. Kind and kubectl work seamlessly. [orbstack.dev](https://orbstack.dev/)
+- **Rancher Desktop** (free, open-source) — GUI-based like Docker Desktop, includes a built-in Kubernetes option. [rancherdesktop.io](https://rancherdesktop.io/)
+- **Podman** (free, Red Hat) — `brew install podman && podman machine init && podman machine start`. Requires `podman machine set --rootful` for Kind compatibility and aliasing `podman` to `docker`. More setup than the others.
+
+Whichever runtime you choose, verify it's working before Day 1:
+
+```bash
+docker info    # Should print server details without errors
+```
+
 ### Software — Install Before Day 1
 
 | Tool | Version | Install |
 |---|---|---|
-| **Docker Desktop** | Latest | [docker.com/get-started](https://www.docker.com/get-started/) |
+| **Docker Desktop** (or alternative above) | Latest | [docker.com/get-started](https://www.docker.com/get-started/) |
 | **Kind** | v0.20+ | `brew install kind` or [kind.sigs.k8s.io](https://kind.sigs.k8s.io/docs/user/quick-start/#installation) |
 | **kubectl** | v1.28+ | `brew install kubectl` or [kubernetes.io/docs/tasks/tools](https://kubernetes.io/docs/tasks/tools/) |
 | **Helm** | v3.12+ | `brew install helm` or [helm.sh/docs/intro/install](https://helm.sh/docs/intro/install/) |
