@@ -128,9 +128,38 @@ docker info    # Should print server details without errors
 pip3 install pulumi pulumi-kubernetes scikit-learn pyyaml requests flask --break-system-packages
 ```
 
+### Optional: run the setup in an isolated devcontainer
+This is optional and can be used, but does not have to. For example `vscode` supports it via extension. See the docs [here](https://code.visualstudio.com/docs/devcontainers/containers) for more details and how to start it.
+
+In the container there are some opinionated tools for kubernetes and ai installed, such as
+- [k9s](https://github.com/derailed/k9s), [kx](https://github.com/onatm/kx) and `kn`
+- [claude-code](https://code.claude.com/docs/en/overview) which you can login within the container via browser login
+
+To open a shell in the container you can
+1. either open it directly in `vscode` via a terminal
+2. or exec directly on the shell via `docker exec -w "/workspaces/peh-course" -it $(docker ps --filter name=peh-course -q) zsh`
+
+A known issues for `orbstack` is that by default the kubeconfig from a kind cluster points to 127.0.0.1:34747 — that's the host's port-forward to the Kind API server. Inside the devcontainer, 127.0.0.1 is the container's loopback, not the host's, so the connection refuses.
+
+The fix is the following, e.g. for Session2
+```bash
+# Create the cluster first
+kind create cluster --name workshop
+# From inside the devcontainer (docker-outside-of-docker gives you the host daemon:                                                                                                      
+docker network connect kind peh-course                                                                                                                                                    
+kind get kubeconfig --name workshop --internal > /root/.kube/config
+kubectl cluster-info 
+
+# verify it e.g. via
+pwd
+/workspaces/peh-course/Session2/demo
+# then execute the runner script, which should terminate succesfully
+../../runners/run-session2-demo.sh 
+```
+
 ### Quick Validation
 
-Run this after installation to confirm everything works:
+Run this after installation to confirm everything works (also in devcontainer):
 
 ```bash
 docker --version

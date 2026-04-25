@@ -1,0 +1,104 @@
+{
+  "name": "peh-course",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "runArgs": [
+    "--name",
+    "peh-course"
+  ],
+  "workspaceFolder": "/workspaces/peh-course",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code",
+        "charliermarsh.ruff",
+        "dotenv.dotenv-vscode",
+        "esbenp.prettier-vscode",
+        "github.github-vscode-theme",
+        "lumirelle.shell-format-rev",
+        "ms-python.debugpy",
+        "ms-python.python",
+        "detachhead.basedpyright",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "redhat.vscode-yaml",
+        "tamasfe.even-better-toml",
+        "pkief.material-icon-theme"
+      ]
+    }
+  },
+  "forwardPorts": [
+    3000, // Backstage frontend (Session 5)
+    7007, // Backstage backend (Session 5)
+    5000, // Flask onboarding API (Session 5 takehome)
+    9090, // Prometheus (Session 6)
+    16686, // Jaeger UI (Session 6)
+    3001, // Grafana (Session 6)
+    2333 // Chaos Dashboard (Session 7)
+  ],
+  "portsAttributes": {
+    "3000": { "label": "Backstage / Exercises" },
+    "7007": { "label": "Backstage Backend" },
+    "5000": { "label": "Onboarding API (Flask)" },
+    "9090": { "label": "Prometheus" },
+    "16686": { "label": "Jaeger" },
+    "3001": { "label": "Grafana" },
+    "2333": { "label": "Chaos Dashboard" }
+  },
+  /* GET FROM: https://containers.dev/features */
+  "features": {
+    /* https://github.com/devcontainers/features/tree/main/src/common-utils */
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "installOhMyZshConfig": true,
+      "upgradePackages": true,
+      "configureZshAsDefaultShell": true
+    },
+    /* Python 3.12 — workshop requires 3.10+ */
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12",
+      "installTools": false
+    },
+    /* Node.js — required for Backstage (Session 5) */
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20",
+      "nvm": "latest"
+    },
+    /* Docker outside of Docker — Kind needs the host Docker socket */
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "moby": "false"
+    },
+    /* kubectl — managed by the kubectl-helm-minikube feature for version pinning */
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "version": "latest",
+      "helm": "latest",
+      "minikube": "none"
+    },
+    /* uv — fast Python package manager (optional, useful for ad-hoc envs) */
+    "ghcr.io/va-h/devcontainers-features/uv:1": {
+      "version": "latest",
+      "shellautocompletion": true
+    },
+    /* Git */
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    },
+    /* GitHub CLI */
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    /* Shell goodies */
+    "ghcr.io/braun-daniel/devcontainer-features/spaceship:1": {},
+    "ghcr.io/braun-daniel/devcontainer-features/fzf:1": {},
+    "ghcr.io/jungaretti/features/ripgrep:1": {}
+  },
+  "mounts": [
+    "type=bind,source=${localEnv:HOME}/.ssh,target=/root/.ssh,readonly",
+    "type=bind,source=${localEnv:HOME}/.kube,target=/root/.kube-host,readonly"
+  ],
+  "remoteEnv": {
+    "KUBECONFIG": "/root/.kube/config"
+  },
+  "postCreateCommand": "bash -l .devcontainer/post-create.sh",
+  "remoteUser": "root",
+  "containerUser": "root"
+}
